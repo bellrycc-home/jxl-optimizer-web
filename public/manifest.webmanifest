@@ -1,0 +1,21 @@
+{
+  "name": "JXL Optimizer Web",
+  "short_name": "JXL Optimizer",
+  "description": "Optimización de imágenes a JPEG XL, 100 % en tu navegador. Sin subida de imágenes, sin backend.",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "background_color": "#070c17",
+  "theme_color": "#0b1120",
+  "lang": "es",
+  "categories": ["productivity", "utilities"],
+  "icons": [
+    {
+      "src": "./favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}

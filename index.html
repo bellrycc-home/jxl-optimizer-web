@@ -1,0 +1,240 @@
+<!doctype html>
+<html lang="es" data-theme="dark">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <meta name="theme-color" content="#090d16" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="JXL Optimizer" />
+    <meta
+      name="description"
+      content="Optimizador de imágenes a JPEG XL que funciona completamente en tu navegador. Sin subidas, sin backend."
+    />
+    <title>JXL Optimizer Web</title>
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <link rel="manifest" href="/manifest.webmanifest" />
+    <script>
+      // Apply the saved (or system) theme before first paint to avoid a flash.
+      try {
+        var saved = localStorage.getItem('jxl-theme');
+        document.documentElement.dataset.theme = saved || (matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark');
+      } catch (e) {
+        document.documentElement.dataset.theme = 'dark';
+      }
+    </script>
+    <link rel="stylesheet" href="/src/styles/main.css" />
+  </head>
+  <body>
+    <div id="app">
+      <header class="site-header">
+        <div class="brand">
+          <span class="brand-mark" aria-hidden="true"><svg class="icon icon-lg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12.83 2.18a2 2 0 0 0-1.66 0L2.6 6.08a1 1 0 0 0 0 1.83l8.58 3.91a2 2 0 0 0 1.66 0l8.58-3.9a1 1 0 0 0 0-1.83z" /> <path d="M2 12a1 1 0 0 0 .58.91l8.6 3.91a2 2 0 0 0 1.65 0l8.58-3.9A1 1 0 0 0 22 12" /> <path d="M2 17a1 1 0 0 0 .58.91l8.6 3.91a2 2 0 0 0 1.65 0l8.58-3.9A1 1 0 0 0 22 17" /></svg></span>
+          <div class="brand-text">
+            <h1>JXL Optimizer <em>Web</em></h1>
+            <p class="tagline">Reduce el peso de tus imágenes en tu propio dispositivo, sin subirlas a internet.</p>
+          </div>
+        </div>
+        <div class="badges">
+          <span class="badge badge-engine" id="engineBadge" title="Motor libjxl compilado a WebAssembly">Motor: cargando…</span>
+          <span class="badge badge-local" title="Tus imágenes nunca salen de este dispositivo"><svg class="icon icon-sm" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z" /> <path d="m9 12 2 2 4-4" /></svg><span>100 % local</span></span>
+          <button id="themeToggle" class="icon-button" type="button" aria-label="Cambiar entre tema claro y oscuro" title="Cambiar tema">
+            <span class="icon-sun"><svg class="icon icon-md" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="4" /> <path d="M12 2v2" /> <path d="M12 20v2" /> <path d="m4.93 4.93 1.41 1.41" /> <path d="m17.66 17.66 1.41 1.41" /> <path d="M2 12h2" /> <path d="M20 12h2" /> <path d="m6.34 17.66-1.41 1.41" /> <path d="m19.07 4.93-1.41 1.41" /></svg></span>
+            <span class="icon-moon"><svg class="icon icon-md" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M20.985 12.486a9 9 0 1 1-9.473-9.472c.405-.022.617.46.402.803a6 6 0 0 0 8.268 8.268c.344-.215.825-.004.803.401" /></svg></span>
+          </button>
+        </div>
+      </header>
+
+      <div class="toolbar">
+        <div class="tabs" role="tablist" aria-label="Secciones">
+          <button class="tab is-active" id="tab-workspace" type="button" role="tab" aria-selected="true" aria-controls="view-workspace">
+            <svg class="icon icon-sm" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><rect width="18" height="18" x="3" y="3" rx="2" ry="2" /> <circle cx="9" cy="9" r="2" /> <path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21" /></svg><span>Optimizador</span><span class="tab-count" id="queueCount">0</span>
+          </button>
+          <button class="tab" id="tab-logs" type="button" role="tab" aria-selected="false" aria-controls="view-logs">
+            <svg class="icon icon-sm" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 19h8" /> <path d="m4 17 6-6-6-6" /></svg><span>Registro</span><span class="tab-count" id="logCount">0</span>
+          </button>
+        </div>
+        <div class="savings-bar" aria-label="Resumen de ahorro del lote">
+          <span class="savings-item"><span class="savings-label">Original</span><strong id="statOriginal">0 B</strong></span>
+          <span class="savings-sep" aria-hidden="true">|</span>
+          <span class="savings-item"><span class="savings-label">Salida JXL</span><strong id="statResult" class="accent-text">0 B</strong></span>
+          <span class="savings-sep" aria-hidden="true">|</span>
+          <span class="savings-item"><span class="savings-label">Ahorro</span><strong id="statSaved" class="savings-pill">—</strong></span>
+        </div>
+      </div>
+
+      <main class="layout" id="view-workspace" role="tabpanel" aria-labelledby="tab-workspace">
+        <aside class="column column-side">
+          <section class="panel settings-panel" aria-labelledby="settings-title">
+            <div class="panel-heading">
+              <h2 id="settings-title"><svg class="icon icon-sm" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M10 5H3" /> <path d="M12 19H3" /> <path d="M14 3v4" /> <path d="M16 17v4" /> <path d="M21 12h-9" /> <path d="M21 19h-5" /> <path d="M21 5h-7" /> <path d="M8 10v4" /> <path d="M8 12H3" /></svg>Perfil de compresión</h2>
+              <span class="hint" id="engineDetail">libjxl WASM</span>
+            </div>
+
+            <label for="profile" class="sr-only">Perfil de compresión</label>
+            <select id="profile" class="sr-only" tabindex="-1" aria-hidden="true"></select>
+            <div id="profileCards" class="profile-grid" role="radiogroup" aria-labelledby="settings-title"></div>
+            <p id="profileDescription" class="description"></p>
+
+            <div class="field-block">
+              <label for="effort" class="field-label">
+                <span>Effort</span>
+                <strong id="effortValue" class="value-pill">7</strong>
+              </label>
+              <input id="effort" class="range" type="range" min="1" max="10" step="1" value="7" />
+              <div class="range-scale"><span>1 · rápido</span><span>7 · por defecto</span><span>10 · lento</span></div>
+              <p class="description">Effort alto = mejor compresión, más tiempo y memoria. Los niveles 9 y 10 pueden tardar minutos en imágenes grandes.</p>
+            </div>
+
+            <div id="distanceRow" class="field-row">
+              <div>
+                <span class="field-label">Distance</span>
+                <span class="hint">0 = sin pérdida · 25 = máxima pérdida</span>
+              </div>
+              <div class="field-inline">
+                <input id="distance" class="input input-number" type="number" min="0" max="25" step="0.1" value="1.5" />
+                <span id="distanceFixed" class="fixed-value">1.5</span>
+              </div>
+            </div>
+
+            <div id="jpegModeRow" class="field-block">
+              <label for="jpegMode" class="field-label">Comportamiento con JPEG</label>
+              <select id="jpegMode" class="input">
+                <option value="reversible" selected>JPEG reversible (preserva el bitstream original)</option>
+                <option value="lossy">JPEG con pérdida (recodifica píxeles con el Distance elegido)</option>
+              </select>
+              <p id="jpegModeHint" class="description">
+                Reversible usa <code>JxlEncoderAddJPEGFrame</code> y permite reconstruir el JPEG original byte a byte.
+              </p>
+            </div>
+
+            <label class="checkbox-row" for="autoAnalyze">
+              <input id="autoAnalyze" type="checkbox" checked />
+              <span>
+                <strong>Análisis automático y perfil recomendado</strong>
+                <small>Clasifica cada imagen (tipo probable: foto, captura, ilustración o gráfico) y sugiere un perfil. Es una heurística: tú decides.</small>
+              </span>
+            </label>
+
+            <details class="advanced">
+              <summary>Límites de seguridad</summary>
+              <div class="advanced-grid">
+                <label for="maxMegapixels" class="field-label">Máx. megapíxeles
+                  <input id="maxMegapixels" class="input input-number" type="number" min="1" max="500" step="1" value="100" />
+                </label>
+                <label for="maxFileSize" class="field-label">Máx. tamaño de archivo (MB)
+                  <input id="maxFileSize" class="input input-number" type="number" min="1" max="2048" step="1" value="250" />
+                </label>
+              </div>
+              <p class="description">Las imágenes que superan un límite se omiten con un aviso. Los límites se comprueban antes de decodificar y antes de procesar.</p>
+            </details>
+
+            <aside class="notice" id="metadataNotice" aria-label="Metadatos y color">
+              <span class="notice-icon" aria-hidden="true"><svg class="icon icon-sm" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="10" /> <path d="M12 16v-4" /> <path d="M12 8h.01" /></svg></span>
+              <div>
+                <strong>Metadatos y color</strong>
+                <ul>
+                  <li>Los modos que <em>recodifican píxeles</em> (PNG, WebP y JPEG con pérdida) usan el decodificador del navegador: según la imagen, pueden perderse metadatos EXIF/XMP y perfiles ICC, el color se normaliza a sRGB y la profundidad se limita a 8 bits.</li>
+                  <li>El <em>JPEG reversible</em> no decodifica los píxeles: conserva el bitstream original y se comprueba que puede reconstruirse byte a byte.</li>
+                  <li>Tus archivos originales no se modifican. Si el color o los metadatos son críticos, conserva los originales.</li>
+                </ul>
+              </div>
+            </aside>
+          </section>
+
+          <section class="panel stats-panel" aria-labelledby="stats-title">
+            <div class="panel-heading">
+              <h2 id="stats-title">Resumen del lote</h2>
+            </div>
+            <div class="stats-grid">
+              <div class="stat"><span class="stat-label">Archivos</span><strong id="statFiles">0</strong></div>
+              <div class="stat"><span class="stat-label">Completados</span><strong id="statDone">0</strong></div>
+              <div class="stat"><span class="stat-label">Errores / omitidos</span><strong id="statErrors">0</strong></div>
+              <div class="stat"><span class="stat-label">Tiempo</span><strong id="statTime">0 s</strong></div>
+            </div>
+            <p id="zipStatus" class="description">El ZIP de un lote se prepara localmente al terminar.</p>
+          </section>
+        </aside>
+
+        <section class="column column-main">
+          <section class="panel drop-panel" aria-labelledby="drop-title">
+            <h2 id="drop-title" class="sr-only">Añadir imágenes</h2>
+            <label class="dropzone" id="dropzone" for="fileInput">
+              <input id="fileInput" type="file" accept="image/jpeg,image/png,image/webp,.jpg,.jpeg,.png,.webp" multiple />
+              <span class="drop-icon" aria-hidden="true"><svg class="icon icon-lg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 13v8" /> <path d="M4 14.899A7 7 0 1 1 15.71 8h1.79a4.5 4.5 0 0 1 2.5 8.242" /> <path d="m8 17 4-4 4 4" /></svg></span>
+              <strong>Arrastra imágenes aquí o haz clic para seleccionarlas</strong>
+              <small>Se procesan una a una en tu navegador. Los originales nunca se modifican ni salen de tu dispositivo.</small>
+              <span class="format-chips" aria-hidden="true"><span>.JPG / .JPEG</span><span>.PNG</span><span>.WEBP</span></span>
+            </label>
+            <div class="drop-actions">
+              <button id="addFolderBtn" class="button button-ghost button-small" type="button"><svg class="icon icon-sm" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 10v6" /> <path d="M9 13h6" /> <path d="M20 20a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9a2 2 0 0 1-1.69-.9L9.6 3.9A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2Z" /></svg><span>Añadir carpeta</span></button>
+              <input id="folderInput" type="file" webkitdirectory multiple hidden />
+              <span class="hint">Se conservan las subcarpetas en el ZIP cuando el navegador las proporciona.</span>
+            </div>
+          </section>
+
+          <section class="panel queue-panel" aria-labelledby="queue-title">
+            <div class="panel-heading">
+              <h2 id="queue-title">Cola de procesamiento</h2>
+              <div class="heading-actions">
+                <button id="clearQueueBtn" class="button button-small button-ghost" type="button" disabled><svg class="icon icon-sm" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M10 11v6" /> <path d="M14 11v6" /> <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6" /> <path d="M3 6h18" /> <path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" /></svg><span>Vaciar cola</span></button>
+                <button id="zipBtn" class="button button-small button-success" type="button" disabled><svg class="icon icon-sm" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><rect width="20" height="5" x="2" y="3" rx="1" /> <path d="M4 8v11a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8" /> <path d="M10 12h4" /></svg><span>Descargar ZIP</span></button>
+              </div>
+            </div>
+
+            <div class="batch-controls">
+              <div class="batch-buttons">
+                <button id="startBtn" class="button button-primary" type="button" disabled><svg class="icon icon-sm" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M5 5a2 2 0 0 1 3.008-1.728l11.997 6.998a2 2 0 0 1 .003 3.458l-12 7A2 2 0 0 1 5 19z" /></svg><span>Iniciar procesamiento</span></button>
+                <button id="cancelBtn" class="button button-danger" type="button" disabled><svg class="icon icon-sm" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><rect width="18" height="18" x="3" y="3" rx="2" /></svg><span>Cancelar cola</span></button>
+              </div>
+              <div class="progress-block">
+                <div class="progress-label">
+                  <span id="globalProgressText">Sin lote en curso</span>
+                  <span id="globalProgressCount">0 / 0</span>
+                </div>
+                <div class="progress-track" role="progressbar" aria-labelledby="globalProgressText" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" id="globalProgressTrack">
+                  <div class="progress-fill" id="globalProgress"></div>
+                </div>
+                <div class="progress-label progress-current">
+                  <span id="currentLabel">Esperando archivos</span>
+                  <span id="currentPercent"></span>
+                </div>
+                <div class="progress-track progress-track-thin" role="progressbar" aria-label="Progreso del archivo actual" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" id="currentProgressTrack">
+                  <div class="progress-fill progress-fill-current" id="currentProgress"></div>
+                </div>
+              </div>
+            </div>
+
+            <div id="queueEmpty" class="empty-state">
+              Todavía no hay imágenes en la cola. Añade archivos para empezar.
+            </div>
+            <div id="fileList" class="file-list" aria-live="polite"></div>
+          </section>
+        </section>
+      </main>
+
+      <section class="layout-logs" id="view-logs" role="tabpanel" aria-labelledby="tab-logs" hidden>
+        <section class="panel log-panel" aria-labelledby="log-title">
+          <div class="panel-heading">
+            <div>
+              <h2 id="log-title"><svg class="icon icon-sm" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 19h8" /> <path d="m4 17 6-6-6-6" /></svg>Registro de operaciones y verificación</h2>
+              <p class="description">Historial de tiempos, ahorro y comprobaciones de integridad. Todo ocurre en tu navegador.</p>
+            </div>
+            <div class="heading-actions">
+              <button id="copyLogBtn" class="button button-small button-ghost" type="button"><svg class="icon icon-sm" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><rect width="14" height="14" x="8" y="8" rx="2" ry="2" /> <path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2" /></svg><span>Copiar</span></button>
+              <button id="clearLogBtn" class="button button-small button-ghost" type="button"><svg class="icon icon-sm" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M21 21H8a2 2 0 0 1-1.42-.587l-3.994-3.999a2 2 0 0 1 0-2.828l10-10a2 2 0 0 1 2.829 0l5.999 6a2 2 0 0 1 0 2.828L12.834 21" /> <path d="m5.082 11.09 8.828 8.828" /></svg><span>Limpiar</span></button>
+            </div>
+          </div>
+          <div id="logEntries" class="log-entries" role="log" aria-live="polite"></div>
+        </section>
+      </section>
+
+      <footer class="site-footer">
+        <span>JXL Optimizer Web · libjxl compilado a WebAssembly · iconos <a href="https://lucide.dev" rel="noopener">Lucide</a> (ISC)</span>
+        <span>Sin subida de imágenes · Sin backend · Funciona sin conexión tras la primera carga</span>
+      </footer>
+    </div>
+
+    <script type="module" src="/src/main.js"></script>
+  </body>
+</html>
