@@ -29,3 +29,6 @@ No tocados: encoder, perfiles, parámetros, `engine/`, `public/wasm/`.
 
 ## Límites pendientes
 Sin fuentes web (pila del sistema). Safari sin probar. El ZIP aún mantiene los resultados en memoria hasta vaciar la cola. Heurística: zona intermedia con confianza «baja».
+
+## IA_Alert
+Nuevos: `src/vendor/ia-alert.js` (original + opción `css:false`), `src/styles/ia-alert.css`. Modificados: `src/main.js` (imports, `mount`, `refreshTheme` 260 ms después del cambio de tema por la transición del `body`), `src/styles/main.css` (1 regla). Verificado en Chromium con la CSP: sin errores, sin `<style>` inline, escritorio, popup, cambio de tema y móvil táctil. Los tests propios de IA_Alert no se copiaron al repositorio.

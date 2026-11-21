@@ -122,3 +122,18 @@ módulos WASM. Verificable en DevTools → Network.
 
 ### Iconos
 Iconos [Lucide](https://lucide.dev) (licencia ISC) incrustados como SVG.
+
+### Si en GitHub Pages ves el fondo blanco e iconos enormes
+Significa que Pages está sirviendo el **código fuente** y no el resultado de `npm run build`: `/src/styles/main.css` da 404, no hay estilos y los SVG ocupan toda la pantalla. Solución: **Settings → Pages → Source: GitHub Actions** (no «Deploy from a branch») y que el workflow termine en verde. Si ocurre, la página ahora muestra un aviso rojo explicándolo.
+
+### Seguridad
+- CSP por `<meta>` generada en el build (`default-src 'self'`, sin `unsafe-inline`/`unsafe-eval`; solo `wasm-unsafe-eval` para WebAssembly y el hash del script inline). `connect-src 'self'`: la página no puede enviar datos a otro origen aunque hubiera un fallo.
+- `referrer: no-referrer`, sin recursos de terceros, sin cookies ni analítica.
+- Límite conocido: GitHub Pages no permite cabeceras, así que `frame-ancestors`/`X-Frame-Options` no se pueden aplicar.
+
+### Rendimiento
+El service worker precachea solo la app (~8 archivos, <100 KB); el motor WASM (2,6 MB por variante) se descarga y cachea la primera vez que se usa, sin bajar las dos variantes. Funciona sin conexión después de la primera carga.
+
+### Aviso de contenido generado por IA (IA_Alert)
+`src/vendor/ia-alert.js` (+ `src/styles/ia-alert.css`) es IA_Alert 2.0, incluido en el bundle. En escritorio es un icono ⚠ dentro de la cabecera que se expande y se colapsa solo a los 30 s; en móvil es un cartel superior con ×. Se monta en `src/main.js` (`IAAlert.mount({ before: '#themeToggle', css: false, … })`).
+Cambios respecto al original, necesarios por la CSP (`style-src 'self'`): se añadió la opción `css: false` / `data-css="false"` para no inyectar el `<style>`, y su CSS vive en `ia-alert.css`. Si actualizas IA_Alert, vuelve a extraer el CSS de la constante `CSS` y conserva esa opción. Para cambiar el texto: `message:` en la llamada a `mount`; para quitarlo, borra esa llamada y los dos imports de `main.js`.

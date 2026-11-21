@@ -15,6 +15,8 @@ import { initProfileCards } from './ui/profile-cards.js';
 import { askZipStrategy, mountZipLimitControl } from './ui/zip-dialog.js';
 import { showCompatError, showCompatWarnings } from './ui/compat-banner.js';
 import { registerServiceWorker } from './ui/update-banner.js';
+import './vendor/ia-alert.js';
+import './styles/ia-alert.css';
 
 const log = new LogPanel(document.querySelector('#logEntries'));
 const queue = new SequentialQueue();
@@ -696,6 +698,21 @@ if (import.meta.env.PROD) {
 }
 
 initTheme(document.querySelector('#themeToggle'));
+
+// AI-generated-content notice (IA_Alert). Desktop: inline icon in the header
+// that expands; mobile: top banner + small button. Its CSS ships in
+// ia-alert.css, so no inline <style> is needed under the page CSP.
+const iaAlert = globalThis.IAAlert?.mount({
+  before: '#themeToggle',
+  position: 'bottom-right',
+  lang: 'es',
+  css: false,
+});
+// IA_Alert reads the real page background; wait for the 0.2 s body colour
+// transition to finish or it would sample the old colour.
+document
+  .querySelector('#themeToggle')
+  ?.addEventListener('click', () => setTimeout(() => iaAlert?.refreshTheme(), 260));
 initProfileCards(document.querySelector('#profileCards'), document.querySelector('#profile'));
 initTabs([
   { button: document.querySelector('#tab-workspace'), panel: document.querySelector('#view-workspace') },

@@ -23,7 +23,7 @@ function pwaPrecachePlugin() {
     closeBundle() {
       const files = listFiles(outDir)
         .map((file) => relative(outDir, file).split(sep).join('/'))
-        .filter((file) => file !== 'sw.js' && !file.endsWith('.map'))
+        .filter((file) => file !== 'sw.js' && !file.endsWith('.map') && !file.startsWith('wasm/'))
         .sort();
       const hash = createHash('sha256');
       hash.update(process.env.JXL_BUILD_SALT ?? '');
@@ -45,11 +45,43 @@ function pwaPrecachePlugin() {
   };
 }
 
+// Content-Security-Policy via <meta> (GitHub Pages cannot send headers). Added at
+// build time so it can include the hash of the small inline bootstrap script.
+// frame-ancestors cannot be set from a meta tag; that limitation is documented.
+function cspPlugin() {
+  return {
+    name: 'jxl-csp',
+    apply: 'build',
+    transformIndexHtml: {
+      order: 'post',
+      handler(html) {
+        const hashes = [...html.matchAll(/<script>([\s\S]*?)<\/script>/g)].map(
+          (m) => `'sha256-${createHash('sha256').update(m[1]).digest('base64')}'`,
+        );
+        const csp = [
+          "default-src 'self'",
+          `script-src 'self' 'wasm-unsafe-eval' ${hashes.join(' ')}`.trim(),
+          "style-src 'self'",
+          "img-src 'self' data: blob:",
+          "font-src 'self'",
+          "connect-src 'self'",
+          "worker-src 'self' blob:",
+          "manifest-src 'self'",
+          "object-src 'none'",
+          "base-uri 'self'",
+          "form-action 'none'",
+        ].join('; ');
+        return html.replace('<meta charset="UTF-8" />', `<meta charset="UTF-8" />\n    <meta http-equiv="Content-Security-Policy" content="${csp}" />`);
+      },
+    },
+  };
+}
+
 // Relative base keeps the app working on GitHub Pages under a repository
 // subpath as well as on the root of any static host.
 export default defineConfig({
   base: './',
-  plugins: [pwaPrecachePlugin()],
+  plugins: [cspPlugin(), pwaPrecachePlugin()],
   build: {
     outDir: 'dist',
     assetsInlineLimit: 0,

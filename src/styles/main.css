@@ -148,6 +148,9 @@ a { color: var(--accent-text); }
 :root[data-theme='dark'] .icon-moon, :root:not([data-theme='light']) .icon-moon { display: none; }
 :root[data-theme='light'] .icon-sun { display: none; }
 
+/* IA_Alert inline widget inside the header badges */
+.badges .ia-alert-inline { margin: 0; }
+
 /* ---------- Toolbar: tabs + savings bar ---------- */
 .toolbar {
   display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px;
@@ -264,6 +267,8 @@ a { color: var(--accent-text); }
 .file-list { display: flex; flex-direction: column; border: 1px solid var(--border); border-radius: var(--radius-sm); max-height: 620px; overflow-y: auto; }
 .file-list:empty { display: none; }
 .file-row {
+  content-visibility: auto;
+  contain-intrinsic-size: auto 132px;
   display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 12px; padding: 14px 16px;
   border-bottom: 1px solid var(--border); border-left: 3px solid transparent;
 }

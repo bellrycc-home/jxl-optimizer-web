@@ -5,9 +5,14 @@ import { supportsSimd } from '../wasm/jxl-engine.js';
 // failure.
 
 function supportsModuleWorker() {
+  // A blob: URL is allowed by the page CSP (worker-src 'self' blob:); a data:
+  // URL would be blocked. The `type` getter only runs in browsers that
+  // implement module workers.
+  let url;
   try {
     let used = false;
-    const worker = new Worker('data:text/javascript,', {
+    url = URL.createObjectURL(new Blob([''], { type: 'text/javascript' }));
+    const worker = new Worker(url, {
       get type() {
         used = true;
         return 'module';
@@ -17,6 +22,8 @@ function supportsModuleWorker() {
     return used;
   } catch {
     return false;
+  } finally {
+    if (url) URL.revokeObjectURL(url);
   }
 }
 

@@ -62,11 +62,20 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // Everything else is cache-first from this build's own cache (hashed assets,
-  // WASM and the app shell are all precached). `?v=` query strings are ignored.
+  // Cache-first from this build's own cache. The app shell and hashed assets
+  // are precached; the WASM engine (~2.6 MB per variant, and only one variant
+  // is ever used) is cached on first use so install does not download both.
+  // `?v=` query strings are ignored.
   event.respondWith(
-    caches
-      .match(request, { cacheName: CACHE_NAME, ignoreSearch: true })
-      .then((hit) => hit ?? fetch(request)),
+    (async () => {
+      const cache = await caches.open(CACHE_NAME);
+      const hit = await cache.match(request, { ignoreSearch: true });
+      if (hit) return hit;
+      const response = await fetch(request);
+      if (response.ok && response.type === 'basic' && /\/wasm\//.test(url.pathname)) {
+        cache.put(request, response.clone()).catch(() => {});
+      }
+      return response;
+    })(),
   );
 });
